@@ -673,10 +673,10 @@ enum JPEGRTPSTATUS JpegInfoPut(struct JPEG *jpeg, int (*putdata)(unsigned char *
 	ret=WriteSOI(jpeg, putdata);
 	if(ret) return JPEGRTPSTATUSERROR;
 
-	ret=WriteDQT(jpeg, putdata);
+	ret=WriteSOF0(jpeg, putdata);
 	if(ret) return JPEGRTPSTATUSERROR;
 
-	ret=WriteSOF0(jpeg, putdata);
+	ret=WriteDQT(jpeg, putdata);
 	if(ret) return JPEGRTPSTATUSERROR;
 
 	ret=WriteDHT(jpeg, putdata);

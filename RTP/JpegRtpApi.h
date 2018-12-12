@@ -19,7 +19,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-//编码是熵编码信息临时内存，图像较小可以减小
+//编码是熵编码信息临时内存，图像较小可以减�
 #define  MAXSCANSIZE   (64*1024*1024)
 //高速模式，全部使用查表，多占用0x1FFFF内存
 //#define  SPEEDFIRST
@@ -30,7 +30,7 @@ struct DQTable
 	unsigned char count;
 	unsigned char table[2][8][8];
 };
-
+// 8bttes
 struct RTPJpegHead
 {
 
@@ -61,7 +61,7 @@ struct RTPQuantizationTableHead
 
 //外部使用
 
-//状态
+//状�
 enum JPEGRTPSTATUS
 {
 	JPEGRTPSTATUSOK=0,
@@ -89,15 +89,15 @@ enum PixFmt
 struct JPEG
 {
 //DQTable
-	unsigned char Q;		//量化标准，1~99，越大质量越好，用于编码
-	struct DQTable dqtable;	//量化表
+	unsigned char Q;		//量化标准�~99，越大质量越好，用于编码
+	struct DQTable dqtable;	//量化�
 //SOF0
 	unsigned short width,height;
 	enum PixFmt pixfmt;//YUV444 0 YUV422 1 YUV420 2
 //DRI
 	unsigned short RSTCount;	
 //SOS
-	unsigned int ScanSize;	//熵编码长度
+	unsigned int ScanSize;	//熵编码长�
 	unsigned char *ScanData;	//熵编码存放位置，用完释放
 };
 
@@ -112,12 +112,12 @@ enum JPEGRTPSTATUS JpegInfoGet(struct JPEG *jpeg, int (*getdata)(unsigned char *
 enum JPEGRTPSTATUS JpegInfoShow(struct JPEG *jpeg);
 
 //将jpeg信息存储
-//参数jpeg为信息存放位置
+//参数jpeg为信息存放位�
 //putdata为回调函数，用于保存信息，须自行实现
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegInfoPut(struct JPEG *jpeg, int (*getdata)(unsigned char *buf, int offset, unsigned int size));
 
-//释放jpeg中的熵编码内存
+//释放jpeg中的熵编码内�
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegInfoDestroy(struct JPEG *jpeg);
 
@@ -133,7 +133,7 @@ enum JPEGRTPSTATUS JpegInfoGetFromFile(struct JPEG *jpeg, const char *filename);
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegInfoPutToFile(struct JPEG *jpeg, const char *filename);
 
-//jpeginfo相关函数列子，读取src的文件信息显示出来然后保存到dst中
+//jpeginfo相关函数列子，读取src的文件信息显示出来然后保存到dst�
 int JpegInfoTest(const char *src, const char *dst);
 
 //jpeg编码配置
@@ -147,7 +147,7 @@ struct JpegEncBuffer
 	unsigned char Q;//(1-99)				//量化系数，越大效果越好，占用空间越大
 };
 //初始化input
-//input为需要初始化的
+//input为需要初始化�
 //Q量化系数 1~99
 //width ,height 宽高，必须为16的倍数
 //pixfmt 颜色格式
@@ -155,14 +155,14 @@ struct JpegEncBuffer
 enum JPEGRTPSTATUS JpegEncBufferInit(struct JpegEncBuffer *input, unsigned char Q,unsigned short int width,unsigned short int height, enum PixFmt pixfmt);
 
 //同JpegEncBufferInit，但将为YCbCr各分量申请内存，用完使用JpegEncBufferDestroy释放
-//input为需要初始化的
+//input为需要初始化�
 //Q量化系数 1~99
 //width ,height 宽高，必须为16的倍数
 //pixfmt 颜色格式
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncBufferCreate(struct JpegEncBuffer *input, unsigned char Q,unsigned short int width,unsigned short int height, enum PixFmt pixfmt);
 
-//释放JpegEncBufferCreate申请的内存
+//释放JpegEncBufferCreate申请的内�
 //input为需要释放的内存所在结构体
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncBufferDestroy(struct JpegEncBuffer *input);
@@ -170,19 +170,19 @@ enum JPEGRTPSTATUS JpegEncBufferDestroy(struct JpegEncBuffer *input);
 //初始化jpec编码器，使用编码器前必须调用
 void JpegEncInit(void);
 
-//开始编码
-//jpeg为编码结果存放位置，不需要配置
+//开始编�
+//jpeg为编码结果存放位置，不需要配�
 //input为编码所需数据，所有结构都需要配置好
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncCode(struct JPEG *jpeg, struct JpegEncBuffer *input);
 
-//测试jpeg编码器
+//测试jpeg编码�
 //file保存的文件名
 int JpegEncTest(const char *file);
 
 
 //色彩转换
-//RGB为24bitRGB数据，从低到高一次为BGR， buf为YCbCr数据存放处，Ybuf、Cbbuf和Crbuf必须有效
+//RGB�4bitRGB数据，从低到高一次为BGR�buf为YCbCr数据存放处，Ybuf、Cbbuf和Crbuf必须有效
 void RGB24toYUV444(unsigned char *RGB, struct JpegEncBuffer *buf);
 void RGB24toYUV422(unsigned char *RGB, struct JpegEncBuffer *buf);
 void RGB24toYUV420(unsigned char *RGB, struct JpegEncBuffer *buf);
@@ -200,6 +200,7 @@ enum JPEGRTPSTATUS BMPInfoGetFromFile(struct BMP *bmp, const char *filename);
 enum JPEGRTPSTATUS BMPToJpeg(const char*src, const char *dst, enum PixFmt pixfmt, unsigned char Q);
 
 
+// 12btytes
 struct RTPHead
 {
 		unsigned char CC:4;
@@ -240,11 +241,11 @@ void RTPJpegFrameShow(struct RTPJpegFrame *rtpjf);
 
 //发送一帧jpeg数据
 //rtpjf存放jpeg数据的结构体
-//timestampinc时间戳增加值，为90000/帧率
+//timestampinc时间戳增加值，�0000/帧率
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS RTPJpegFrameSend(struct RTPJpegFrame *rtpjf, unsigned int timestampinc);
 
-//初始化RTP头
+//初始化RTP�
 //rtphead要初始化的头结构
 //seq随机
 //tim随机
@@ -254,14 +255,14 @@ void RTPHeadInit(struct RTPHead *rtphead, unsigned short seq, unsigned int tim, 
 //初始化RTP连接
 //ipaddr ip地址
 //port端口
-//返回值为sock描述符
+//返回值为sock描述�
 int RTPConnetInit(const char *ipaddr, unsigned short port);
 
 //测试RTP
 //file为要发送的jpg文件
 //times为发送的帧数
 //ipaddr为ip地址
-//port为端口
+//port为端�
 int RTPJpegTest(const char *file, int times, const char *ipaddr, unsigned short port);
 
 

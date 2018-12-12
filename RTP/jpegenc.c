@@ -6,6 +6,10 @@
  */
 #include "JpegRtpApi.h"
 
+// #define DEBUG_LOG	1
+// #define DEBUG_LOG_DCT	1
+// #define DEBUG_LOG_QUANT	1
+
 struct BIT
 {
 	unsigned char size;
@@ -622,11 +626,13 @@ static void QuantizeTableInit(unsigned char Q, unsigned char *lqt, unsigned char
 	  if (lq < 1) lq = 1;
 	  else if (lq > 255) lq = 255;
 	  lqt[zigzag[i]] = lq;
-	  YQT[i]=0x8000/lq;
+	  //YQT[i]=0x8000/lq;
+	  YQT[i]=0x10000/lq;    // 2^16 65536
 	  if (cq < 1) cq = 1;
 	  else if (cq > 255) cq = 255;
 	  cqt[zigzag[i]] = cq;
-	  CbCrQT[i]=0x8000/cq;
+	//  CbCrQT[i]=0x8000/cq;
+	  CbCrQT[i]=0x10000/cq;
   }
 }
 
@@ -638,15 +644,45 @@ static void FDCT (short int * data)
 
 /* All values are shifted left by 10
  and rounded off to nearest integer */
-  static const unsigned short int c1 = 1420; /* cos PI/16 * root(2)  */
-  static const unsigned short int c2 = 1338; /* cos PI/8 * root(2)   */
-  static const unsigned short int c3 = 1204; /* cos 3PI/16 * root(2) */
-  static const unsigned short int c5 = 805; /* cos 5PI/16 * root(2) */
-  static const unsigned short int c6 = 554; /* cos 3PI/8 * root(2)  */
-  static const unsigned short int c7 = 283; /* cos 7PI/16 * root(2) */
+  // static const unsigned short int c1 = 1420; /* cos PI/16 * root(2)  */
+  // static const unsigned short int c2 = 1338; /* cos PI/8 * root(2)   */
+  // static const unsigned short int c3 = 1204; /* cos 3PI/16 * root(2) */
+  // static const unsigned short int c5 = 805; /* cos 5PI/16 * root(2) */
+  // static const unsigned short int c6 = 554; /* cos 3PI/8 * root(2)  */
+  // static const unsigned short int c7 = 283; /* cos 7PI/16 * root(2) */
+  
+  
+  // static const unsigned short int s1 = 3;
+  // static const unsigned short int s2 = 10;
+  // static const unsigned short int s3 = 13;
+  
+  // why *root2, need to divide it later where??   2d multi 1/root(2)  two times
+  
+  static const unsigned short int c0 = 1448; // 1/root(2)
+  static const unsigned short int c1 = 2009; /* cos PI/16 */
+  static const unsigned short int c2 = 1892; /* cos PI/8  */
+  static const unsigned short int c3 = 1703; /* cos 3PI/16 */
+  static const unsigned short int c4 = 1448; /* cos 4PI/16 */ 
+  static const unsigned short int c5 = 1138; /* cos 5PI/16 */
+  static const unsigned short int c6 = 784; /* cos 3PI/8  */
+  static const unsigned short int c7 = 400; /* cos 7PI/16*/
+  
   static const unsigned short int s1 = 3;
-  static const unsigned short int s2 = 10;
-  static const unsigned short int s3 = 13;
+  static const unsigned short int s2 = 12;
+  static const unsigned short int s3 = 12;
+
+#ifdef DEBUG_LOG_DCT
+	printf("==============DCT src====================\n");
+	int m, n;
+	for( m=0; m<8; m++)
+	{
+		for( n=0; n<8; n++)
+		{
+			printf(" %4d", data[m*8+n] );
+		}
+		printf("\n");
+	}
+#endif  
   for (i = 8; i > 0; i--)
 
     {
@@ -662,8 +698,8 @@ static void FDCT (short int * data)
       x8 -= x5;
       x5 = x7 + x6;
       x7 -= x6;
-      data[0] = (short int) (x4 + x5);
-      data[4] = (short int) (x4 - x5);
+      data[0] = (short int) (((x4 + x5)*c0) >> s2);
+      data[4] = (short int) (((x4 - x5)*c0) >> s2);
       data[2] = (short int) ((x8 * c2 + x7 * c6) >> s2);
       data[6] = (short int) ((x8 * c6 - x7 * c2) >> s2);
       data[7] = (short int) ((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> s2);
@@ -672,7 +708,20 @@ static void FDCT (short int * data)
       data[1] = (short int) ((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> s2);
       data += 8;
     }
+
   data -= 64;
+#ifdef DEBUG_LOG_DCT
+	printf("==============DCTO1====================\n");
+	// int m, n;
+	for( m=0; m<8; m++)
+	{
+		for( n=0; n<8; n++)
+		{
+			printf(" %4d", data[m*8+n] );
+		}
+		printf("\n");
+	}
+#endif	
   for (i = 8; i > 0; i--)
 
     {
@@ -688,8 +737,10 @@ static void FDCT (short int * data)
       x8 -= x5;
       x5 = x7 + x6;
       x7 -= x6;
-      data[0] = (short int) ((x4 + x5) >> s1);
-      data[32] = (short int) ((x4 - x5) >> s1);
+      // data[0] = (short int) ((x4 + x5) >> s1);
+      // data[32] = (short int) ((x4 - x5) >> s1);
+		data[0] = (short int)  (((x4 + x5)*c0) >> s3);
+		data[32] = (short int) (((x4 - x5)*c0) >> s3);
       data[16] = (short int) ((x8 * c2 + x7 * c6) >> s3);
       data[48] = (short int) ((x8 * c6 - x7 * c2) >> s3);
       data[56] = (short int) ((x0 * c7 - x1 * c5 + x2 * c3 - x3 * c1) >> s3);
@@ -698,17 +749,57 @@ static void FDCT (short int * data)
       data[8] = (short int) ((x0 * c1 + x1 * c3 + x2 * c5 + x3 * c7) >> s3);
       data++;
     }
+#ifdef DEBUG_LOG_DCT
+	data -= 8;
+	printf("==============DCTO====================\n");
+	// int m, n;
+	for( m=0; m<8; m++)
+	{
+		for( n=0; n<8; n++)
+		{
+			printf(" %4d", data[m*8+n] );
+		}
+		printf("\n");
+	}
+#endif	
 }
 
 static void Quantize(short int *data , unsigned short int *table)
 {
+#ifdef DEBUG_LOG_QUANT
+printf("==============QUANT SRC====================\n");
+	 int m, n;
+	for( m=0; m<8; m++)
+	{
+		for( n=0; n<8; n++)
+		{
+			printf(" %4d", data[m*8+n] );
+		}
+		printf("\n");
+	}	
+		
+#endif
 	int i,temp;
 	for(i=0;i<64;i++)
 	{
 	    temp = data[i] * table[i];
-	    temp = (temp + 0x4000) >> 15;
+	   // temp = (temp + 0x4000) >> 15;
+	    temp = (temp + 0x8000) >> 16;
 	    data[i] = (short int) temp;
 	}
+#ifdef DEBUG_LOG_QUANT
+printf("==============QUANT res====================\n");
+	// int m, n;
+	for( m=0; m<8; m++)
+	{
+		for( n=0; n<8; n++)
+		{
+			printf(" %4d", data[m*8+n] );
+		}
+		printf("\n");
+	}	
+		
+#endif
 }
 
 static void ZigzagScan(short int *data)
@@ -796,7 +887,9 @@ static void JpegEncPutBits(struct JPEG *jpeg,struct BIT *bit)
 	unsigned char l;
 	unsigned char size=bit->size;
 	unsigned short int code=bit->code;
-
+#ifdef DEBUG_LOG
+	printf("JpegEncPutBits: %2d, %4x \n", size, code); 
+#endif	
 	while(size>0)
 	{
 		index=JpegEncPutBitsOffset/8;
@@ -915,7 +1008,14 @@ static void JpegEncHuffman(struct JPEG *jpeg,short int *data, short int diff, st
 	struct BIT bit;
 	unsigned char i,runlength;
 	unsigned char zero;
+	
+#ifdef DEBUG_LOG
+	printf("======huffman=======\n");
+#endif
 	JpegEncDataToVLI(&bit,diff);
+#ifdef DEBUG_LOG
+			printf(" run: %4d, size: %4d, ampl: %4d \n", 0, bit.size, bit.code);
+#endif
 	JpegEncPutBits(jpeg,&DC[bit.size]);
 	JpegEncPutBits(jpeg,&bit);
 
@@ -932,6 +1032,9 @@ static void JpegEncHuffman(struct JPEG *jpeg,short int *data, short int diff, st
 		if(data[i])
 		{
 			JpegEncDataToVLI(&bit,data[i]);
+#ifdef DEBUG_LOG
+			printf(" run: %4d, size: %4d, ampl: %4d \n", runlength, bit.size, bit.code);
+#endif
 			JpegEncPutBits(jpeg,&AC[((runlength<<4)|(bit.size))]);
 			JpegEncPutBits(jpeg,&bit);
 			runlength=0;
@@ -941,6 +1044,9 @@ static void JpegEncHuffman(struct JPEG *jpeg,short int *data, short int diff, st
 			runlength++;
 			if(runlength==16)
 			{
+#ifdef DEBUG_LOG
+			printf("runlength16 \n ");
+#endif
 				JpegEncPutBits(jpeg,&AC[0xF0]);
 				runlength=0;
 			}
@@ -954,7 +1060,15 @@ static void JpegEncHuffman(struct JPEG *jpeg,short int *data, short int diff, st
 
 static enum JPEGRTPSTATUS JpegEncJpegHeadInit(struct JPEG *jpeg, struct JpegEncBuffer *input)
 {
-	if((input->width%16)||(input->height%16))		return IMAGESIZEERROR;
+	// if((input->width%16)||(input->height%16))		return IMAGESIZEERROR;
+	if (input->pixfmt==YUV444)
+		if((input->width%8)||(input->height%8))		return IMAGESIZEERROR;
+	else if (input->pixfmt==YUV422)
+		if((input->width%16)||(input->height%8))		return IMAGESIZEERROR;
+	else if (input->pixfmt==YUV420)
+		if((input->width%16)||(input->height%16))		return IMAGESIZEERROR;
+
+	
 	QuantizeTableInit(input->Q, (unsigned char *)jpeg->dqtable.table[0],(unsigned char *)jpeg->dqtable.table[1]);
 	if(0){
 		int i;
@@ -991,8 +1105,8 @@ void JpegEncInit(void)
 #endif
 }
 
-//开始编码
-//jpeg为编码结果存放位置，不需要配置
+//开始编�
+//jpeg为编码结果存放位置，不需要配�
 //input为编码所需数据，所有结构都需要配置好
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncCode(struct JPEG *jpeg, struct JpegEncBuffer *input)
@@ -1015,6 +1129,9 @@ enum JPEGRTPSTATUS JpegEncCode(struct JPEG *jpeg, struct JpegEncBuffer *input)
 	{
 		for(x=0;x<input->width;x=x+8)
 		{
+#ifdef DEBUG_LOG			
+			printf("=================MB %d, %d =========== \n", y/8, (input->pixfmt==YUV444)?  x/8 : x/16);
+#endif
 			if(input->pixfmt==YUV444)
 			{
 				//Y
@@ -1099,14 +1216,21 @@ enum JPEGRTPSTATUS JpegEncCode(struct JPEG *jpeg, struct JpegEncBuffer *input)
 }
 
 //初始化input
-//input为需要初始化的
+//input为需要初始化�
 //Q量化系数 1~99
 //width ,height 宽高，必须为16的倍数
 //pixfmt 颜色格式
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncBufferInit(struct JpegEncBuffer *input, unsigned char Q,unsigned short int width,unsigned short int height, enum PixFmt pixfmt)
 {
-	if((width%16)||(height%16))		return IMAGESIZEERROR;
+	if (pixfmt==YUV444)
+		if((width%8)||(height%8))		return IMAGESIZEERROR;
+	else if (pixfmt==YUV422)
+		if((width%16)||(height%8))		return IMAGESIZEERROR;
+	else if (pixfmt==YUV420)
+		if((width%16)||(height%16))		return IMAGESIZEERROR;
+	
+	
 	input->Q=Q;
 	input->width=width;
 	input->height=height;
@@ -1115,14 +1239,20 @@ enum JPEGRTPSTATUS JpegEncBufferInit(struct JpegEncBuffer *input, unsigned char 
 }
 
 //同JpegEncBufferInit，但将为YCbCr各分量申请内存，用完使用JpegEncBufferDestroy释放
-//input为需要初始化的
+//input为需要初始化�
 //Q量化系数 1~99
 //width ,height 宽高，必须为16的倍数
 //pixfmt 颜色格式
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncBufferCreate(struct JpegEncBuffer *input, unsigned char Q,unsigned short int width,unsigned short int height, enum PixFmt pixfmt)
 {
-	if((width%16)||(height%16))		return IMAGESIZEERROR;
+	if (pixfmt==YUV444)
+		if((width%8)||(height%8))		return IMAGESIZEERROR;
+	else if (pixfmt==YUV422)
+		if((width%16)||(height%8))		return IMAGESIZEERROR;
+	else if (pixfmt==YUV420)
+		if((width%16)||(height%16))		return IMAGESIZEERROR;
+
 	input->Q=Q;
 	input->width=width;
 	input->height=height;
@@ -1156,7 +1286,7 @@ enum JPEGRTPSTATUS JpegEncBufferCreate(struct JpegEncBuffer *input, unsigned cha
 	return JPEGRTPSTATUSOK;
 }
 
-//释放JpegEncBufferCreate申请的内存
+//释放JpegEncBufferCreate申请的内�
 //input为需要释放的内存所在结构体
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS JpegEncBufferDestroy(struct JpegEncBuffer *input)
@@ -1169,7 +1299,7 @@ enum JPEGRTPSTATUS JpegEncBufferDestroy(struct JpegEncBuffer *input)
 	return JPEGRTPSTATUSOK;
 }
 
-//测试jpeg编码器
+//测试jpeg编码�
 //file保存的文件名
 int JpegEncTest(const char *file)
 {

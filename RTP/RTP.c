@@ -9,7 +9,7 @@
 
 
 #define QVALUE 254
-#define PACKSIZE 1500
+#define PACKSIZE 1044
 
 static unsigned char Packet[PACKSIZE];
 static int rtpsock;
@@ -64,6 +64,7 @@ static void FragmentOffsetSet(struct RTPJpegHead *rtpjh,unsigned int data)
 
 static void FragmentOffsetAdd(struct RTPJpegHead *rtpjh,unsigned int inc)
 {
+	printf("FragmentOffsetAdd: %d\n", inc);
 	unsigned int data;
 	data=FragmentOffsetGet(rtpjh);
 	data=data+inc;
@@ -197,7 +198,7 @@ void RTPJpegFrameShow(struct RTPJpegFrame *rtpjf)
 
 //发送一帧jpeg数据
 //rtpjf存放jpeg数据的结构体
-//timestampinc时间戳增加值，为90000/帧率
+//timestampinc时间戳增加值，�0000/帧率
 //返回JPEGRTPSTATUSOK成功
 enum JPEGRTPSTATUS RTPJpegFrameSend(struct RTPJpegFrame *rtpjf, unsigned int timestampinc)
 {
@@ -277,7 +278,7 @@ enum JPEGRTPSTATUS RTPJpegFrameSend(struct RTPJpegFrame *rtpjf, unsigned int tim
 //初始化RTP连接
 //ipaddr ip地址
 //port端口
-//返回值为sock描述符
+//返回值为sock描述�
 int RTPConnetInit(const char *ipaddr, unsigned short port)
 {
 	int sock;
@@ -290,7 +291,7 @@ int RTPConnetInit(const char *ipaddr, unsigned short port)
 	return sock;
 }
 
-//初始化RTP头
+//初始化RTP�
 //rtphead要初始化的头结构
 //seq随机
 //tim随机
@@ -312,7 +313,7 @@ void RTPHeadInit(struct RTPHead *rtphead, unsigned short seq, unsigned int tim, 
 //file为要发送的jpg文件
 //times为发送的帧数
 //ipaddr为ip地址
-//port为端口
+//port为端�
 int RTPJpegTest(const char *file, int times , const char *ipaddr, unsigned short port)
 {
 	enum JPEGRTPSTATUS  ret;
